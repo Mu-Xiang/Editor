@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -62,13 +63,19 @@ public class Editor extends JFrame {
 		JTextArea textAreaMain = new JTextArea();
 		scrollPane.setViewportView(textAreaMain);
 		
+		JPanel panel = new JPanel();
+		scrollPane.setColumnHeaderView(panel);
+		
+		JLabel lblNowOpening = new JLabel("Now Opening : ");
+		panel.add(lblNowOpening);
+		
+		JLabel pathLabel = new JLabel(" ");
+		panel.add(pathLabel);
+		pathLabel.setVisible(true);
+		
 		//Menu
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
-		
-		JLabel pathLabel = new JLabel("null");  //To temp file path
-		menuBar.add(pathLabel);
-		pathLabel.setVisible(false);
 		
 		var fileNew = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -138,7 +145,7 @@ public class Editor extends JFrame {
 	}
 	
 	private void NewMethod(JTextArea textAreaMain, JLabel pathLabel) {
-		if (pathLabel.getText() == "null") {
+		if (pathLabel.getText() == " ") {
 			if (!textAreaMain.getText().equals("")) {
 				int result = JOptionPane.showConfirmDialog(null, "You haven't save yet.\nDo you want to save it?", "Message", JOptionPane.YES_NO_CANCEL_OPTION);
 				if (result == JOptionPane.YES_OPTION)
@@ -149,21 +156,28 @@ public class Editor extends JFrame {
 					return;
 			}
 		} else {
-			int result = JOptionPane.showConfirmDialog(null, "You haven't save yet.\nDo you want to save it?", "Message", JOptionPane.YES_NO_CANCEL_OPTION);
-			if (result == JOptionPane.YES_OPTION)
-				SaveMethod(textAreaMain, pathLabel);
-			else if (result == JOptionPane.NO_OPTION) {
-				//nothing
-			} else
-				return;
+			try {
+				File opening = new File(pathLabel.getText());
+				if (!Files.readString(opening.toPath()).equals(textAreaMain.getText())) {
+					int result = JOptionPane.showConfirmDialog(null, "You haven't save yet.\nDo you want to save it?", "Message", JOptionPane.YES_NO_CANCEL_OPTION);
+					if (result == JOptionPane.YES_OPTION)
+						SaveMethod(textAreaMain, pathLabel);
+					else if (result == JOptionPane.NO_OPTION) {
+						//nothing
+					} else
+						return;
+				}
+			} catch (HeadlessException | IOException e) {
+				e.printStackTrace();
+			}
 		}
-		pathLabel.setText("null");
+		pathLabel.setText(" ");
 		textAreaMain.setText("");
 	}
 	
 	private void OpenMethod(JTextArea textAreaMain, JLabel pathLabel) {
 		try {
-			if (pathLabel.getText() != "null") {
+			if (pathLabel.getText() != " ") {
 				File opening = new File(pathLabel.getText());
 				if (!Files.readString(opening.toPath()).equals(textAreaMain.getText())) {
 					int result = JOptionPane.showConfirmDialog(null, "You haven't save yet.\nDo you want to save it?", "Message", JOptionPane.YES_NO_CANCEL_OPTION);
@@ -216,7 +230,7 @@ public class Editor extends JFrame {
 	}
 	
 	private void SaveMethod(JTextArea textAreaMain, JLabel pathLabel) {
-		if (pathLabel.getText() == "null") {
+		if (pathLabel.getText() == " ") {
 			SaveAsMethod(textAreaMain, pathLabel);
 		} else {
 			FileWriter fileWriter;
